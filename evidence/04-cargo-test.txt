@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running unittests src\lib.rs (target\x86_64-pc-windows-gnu\debug\deps\z_tenant_flight-6283ea51f78bbcb0.exe)
+
+running 7 tests
+test booking::tests::book_offer_bad_input_returns_err ... ok
+test booking::tests::book_offer_non_wasm_returns_err ... ok
+test booking::tests::book_offer_rejects_inline_pii_fields ... ok
+test search::tests::search_offers_bad_input_returns_err ... ok
+test search::tests::search_offers_non_wasm_returns_err ... ok
+test tests::contract_version_is_semver ... ok
+test tests::contract_version_is_v0_4_0 ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

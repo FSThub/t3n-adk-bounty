@@ -271,6 +271,58 @@ that does carry PII inherits a leak, and the README will tell them they are safe
 Suggested fix: apply the `booking.rs` log-inside/return-code-only treatment in `search.rs`, or
 scope the README sentence to `book-offer` explicitly.
 
+## 13. Re-registering a contract mints a new id and silently breaks every KV ACL pinned to the old one
+
+Found by accident while re-capturing a registration transcript, then reproduced deliberately.
+
+`create-kv-maps` teaches ACLs written against a contract id:
+
+```typescript
+await tenant.maps.create({
+  tail: "secrets",
+  visibility: "private",
+  writers: { only: [contractId] },
+  readers: { only: [contractId] },
+});
+```
+
+Nothing on that page, or on `register-contract`, says that `contract_id` changes on
+**every** registration — including a version bump of the same tail. Observed:
+
+| Registration | Result |
+|---|---|
+| `travel-contracts` v0.1.0 | contract id **501** |
+| `travel-contracts` v0.1.1 (same tail, same wasm) | contract id **502** |
+
+The map ACL still named 501. The bump therefore produced a contract that authenticates, passes
+`agent-auth-update`, executes inside the enclave — and then dies at the KV read:
+
+```
+RPC Error: contract error: kv read: kv_store.get on 'z:f49412c2…:secrets' read denied:
+access denied: TenantContract(did:t3n:f49412c2…/502) cannot read map "z:f49412c2…:secrets"
+```
+
+The failure mode is the bad one: nothing fails at deploy time. Registration succeeds, the
+grant succeeds, and the break only surfaces at runtime on the first call that touches a
+secret. On a production tenant that is a version bump that looks clean and takes the contract
+down.
+
+Confirmed as the cause by widening the ACL to `{ only: [501, 502] }` — the same invocation
+then reaches Duffel and returns the expected upstream `401`.
+
+Suggested fix: say plainly on `register-contract` that each registration mints a new id and
+that map ACLs must be updated alongside; or let ACLs be expressed against a tail rather than a
+numeric id, so they survive version bumps.
+
+Minor, same area: `seed-api-key` teaches the low-level control call —
+
+```typescript
+await tenant.executeControl("map-entry-set", { map_name: …, key: …, value: … });
+```
+
+— while `TenantMapsNamespace` already exposes the typed `tenant.maps.entrySet(tail, key, value)`.
+The typed helper is the better thing to teach.
+
 ---
 
 ## Environment note (not a defect)
@@ -312,6 +364,7 @@ Prebuilt `wasm-tools` binaries are published on GitHub releases, so the document
       `00 61 73 6d 0d 00 01 00` (valid WASM **component**, not a bare module)
 - [x] Native test suite green (7/7) and `clippy -D warnings` clean
 - [x] Contract **registered on testnet** — `z:f49412c2…:travel-contracts`, contract id `501`
+      (and `502` after the v0.1.1 bump — see finding 13)
 - [x] Walkthrough step 4 (invoke) — self-grant applied via `agent-auth-update`, contract
       executed in the TEE, secret read from KV, outbound HTTP reached `api.duffel.com`.
       Terminal state is Duffel's own `401` on the placeholder token (no Duffel account here).

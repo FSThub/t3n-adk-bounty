@@ -4,7 +4,9 @@ import { connect, fail } from "./auth.js";
 
 const WASM_PATH = "./z-tenant-flight/target/wasm32-wasip2/release/z_tenant_flight.wasm";
 const CONTRACT_TAIL = "travel-contracts";
-const CONTRACT_VERSION = "0.1.0";
+// Re-registering the same tail at the same version is rejected, so allow a bump from the
+// environment: CONTRACT_VERSION=0.1.1 npm run register
+const CONTRACT_VERSION = process.env.CONTRACT_VERSION ?? "0.1.0";
 
 const { t3n, tenantDid } = await connect();
 

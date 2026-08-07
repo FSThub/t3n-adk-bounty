@@ -1,0 +1,10 @@
+   Compiling zmij v1.0.21
+   Compiling serde_core v1.0.228
+   Compiling wit-bindgen v0.49.0
+   Compiling serde_json v1.0.149
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.0
+   Compiling hex v0.4.3
+   Compiling serde v1.0.228
+   Compiling z-tenant-flight v0.4.1 (D:\miningsol\z-tenant-flight)
+    Finished `release` profile [optimized] target(s) in 20.17s

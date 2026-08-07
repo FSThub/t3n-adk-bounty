@@ -1,0 +1,8 @@
+
+> miningsol@1.0.0 quickstart
+> tsx quickstart.ts
+
+fetchTrustedManifest() failed: Trust manifest request to https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest failed: 405 Method Not Allowed
+Falling back to unsafe_trust_server — DKG attestation is NOT verified.
+Authenticated as did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5 (0x405299158c25e02ab1f6f57781a9406c1784c11a)
+Connected as: did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5

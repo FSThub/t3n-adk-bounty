@@ -4,7 +4,7 @@ Submission for the Superteam Earn bounty *"Create Agent ID, claim free tokens, &
 RUST contract on the network"* (LOL ventures).
 
 All five Walkthrough steps and the Quickstart were completed against T3N testnet on
-Windows 11. **[FINDINGS.md](FINDINGS.md) is the substance of this submission** — 12 verified
+Windows 11. **[FINDINGS.md](FINDINGS.md) is the substance of this submission** — 13 verified
 defects found along the way, each with reproduction steps.
 
 ## Result
@@ -88,5 +88,9 @@ Set `DUFFEL_API_KEY` in `.env` to take step 4 past the Duffel 401.
 | 10 | Walkthrough is 5 pages; page 1 has no forward navigation | High |
 | 11 | `tenant.me()` does not exist | Medium |
 | 12 | Documented error-forwarding guarantee holds on only one of two paths | **High** |
+| 13 | Re-registering mints a new contract id, silently breaking KV ACLs | High |
 
-Findings 7 and 12 are the security-relevant ones.
+Findings 7 and 12 are the security-relevant ones; 13 is the one most likely to bite a
+production tenant.
+
+Verbatim terminal transcripts for every step are in [`evidence/`](evidence).

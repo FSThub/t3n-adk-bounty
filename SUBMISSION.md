@@ -28,13 +28,71 @@ enclave execution, KV read, egress — is exercised and passing. Supplying a rea
 
 > **[SCREENSHOT 1]** — the claim-page success screen showing the Agent ID / DID (redact the API key)
 
-> **[SCREENSHOT 2]** — terminal output of `npm run quickstart` showing `Connected as: did:t3n:f494…`
+### Evidence
 
-> **[SCREENSHOT 3]** — terminal output of `npm run register` showing `Registered z:… as contract id 501`
+Verbatim terminal output. The full transcripts are in `evidence/` in the repo.
 
-> **[SCREENSHOT 4]** — terminal output of `npm run invoke` showing the grant applied and the Duffel 401
+**Quickstart** — `npm run quickstart`
 
-> **[SCREENSHOT 5]** — `cargo test --lib --target x86_64-pc-windows-gnu` showing 7 passed
+```
+fetchTrustedManifest() failed: Trust manifest request to
+https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest failed: 405 Method Not Allowed
+Falling back to unsafe_trust_server — DKG attestation is NOT verified.
+Authenticated as did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5 (0x405299158c25e02ab1f6f57781a9406c1784c11a)
+Connected as: did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5
+```
+
+**Build** — `cargo build --target wasm32-wasip2 --release`
+
+```
+   Compiling z-tenant-flight v0.4.1 (D:\miningsol\z-tenant-flight)
+    Finished `release` profile [optimized] target(s) in 20.17s
+```
+
+Artifact: `z_tenant_flight.wasm`, 193.4 KB, leading bytes `00 61 73 6d 0d 00 01 00` — the
+`\0asm` magic followed by the component layer, so this is a WASM **component**, not a bare module.
+
+**Register** — `npm run register`
+
+```
+TenantClient ready.
+Read ./z-tenant-flight/target/wasm32-wasip2/release/z_tenant_flight.wasm (193.4 KB)
+Registered z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts as contract id 502
+```
+
+(Shown here at v0.1.1. The first registration, at v0.1.0, returned contract id **501** — the
+difference is finding **M** below.)
+
+**Invoke** — `npm run invoke`
+
+```
+z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts @ 0.1.1
+tee:user/contracts @ 2.20.1
+agent-auth-update OK — grant in place
+FAILED at: search-offers
+  name:    RpcError
+  message: RPC Error: contract error: Duffel offer-request failed: HTTP 401 —
+  {"errors":[{...,"code":"access_token_not_found"}],"meta":{"request_id":"GMmbCM2nz10vChMADL0V","status":401}}
+```
+
+Reaching Duffel's 401 is the success condition here: it means authentication, the agent grant,
+enclave execution, the KV secret read, and egress to `api.duffel.com` all passed, and the only
+thing missing is a real Duffel token.
+
+**Test** — `cargo test --lib --target x86_64-pc-windows-gnu`
+
+```
+running 7 tests
+test booking::tests::book_offer_bad_input_returns_err ... ok
+test booking::tests::book_offer_non_wasm_returns_err ... ok
+test booking::tests::book_offer_rejects_inline_pii_fields ... ok
+test search::tests::search_offers_bad_input_returns_err ... ok
+test search::tests::search_offers_non_wasm_returns_err ... ok
+test tests::contract_version_is_semver ... ok
+test tests::contract_version_is_v0_4_0 ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
+```
 
 ---
 
@@ -48,7 +106,7 @@ node `cn-api.sg.testnet.t3n.terminal3.io`
 
 ## 3. Bugs found
 
-12 findings, all reproduced. Full detail with code excerpts and repro steps is in
+13 findings, all reproduced. Full detail with code excerpts and repro steps is in
 `FINDINGS.md` in the repo. Ranked by what I would fix first.
 
 ### High — worth fixing before more developers onboard
@@ -97,6 +155,29 @@ omits it. Copy-pasting fails at `handshake()` with
 register, invoke, test) are discoverable only through `llms.txt`, a file aimed at AI crawlers.
 A participant following the bounty instruction literally builds the contract and never learns
 that registration and invocation exist.
+
+**M. Re-registering a contract mints a new id and silently breaks every KV ACL pinned to the
+old one.** `create-kv-maps` teaches ACLs written as `{ only: [contractId] }`. Nothing says that
+`contract_id` changes on *every* registration, including a version bump of the same tail:
+
+| Registration | Result |
+|---|---|
+| `travel-contracts` v0.1.0 | contract id **501** |
+| `travel-contracts` v0.1.1 (same tail, same wasm) | contract id **502** |
+
+The failure mode is the dangerous kind — nothing fails at deploy time. Registration succeeds,
+`agent-auth-update` succeeds, the contract executes inside the enclave, and it dies only at the
+first call that touches a secret:
+
+```
+kv read: kv_store.get on 'z:f49412c2…:secrets' read denied: access denied:
+TenantContract(did:t3n:f49412c2…/502) cannot read map "z:f49412c2…:secrets"
+```
+
+On a production tenant that is a version bump which looks clean and takes the contract down.
+Confirmed as the cause by widening the ACL to `{ only: [501, 502] }`, after which the same
+invocation reaches Duffel and returns the expected `401`. Either document it loudly on
+`register-contract`, or let ACLs name a tail instead of a numeric id so they survive bumps.
 
 **E. Critical advisory on a clean install.** `npm install @terminal3/t3n-sdk` alone yields
 4 vulnerabilities, 1 critical: `decompress@4.2.1`, reached only through
@@ -150,6 +231,9 @@ intermittent availability rather than a confirmed defect.
   ACL naming the contract id, and the API key must be seeded, before `search-offers` will run.
   Without them the call fails `access denied: TenantContract(...) cannot read map`. Both are
   covered on separate *Tips* pages that the invoke page never links to.
+- **`seed-api-key` teaches the low-level control call** `executeControl("map-entry-set", …)`
+  when `TenantMapsNamespace` already exposes the typed `tenant.maps.entrySet(tail, key, value)`.
+  The typed helper is the better thing to put in front of a new developer.
 
 ---
 

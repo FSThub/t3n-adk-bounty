@@ -1,13 +1,25 @@
+import { readFile } from "node:fs/promises";
 import { TenantClient, getNodeUrl } from "@terminal3/t3n-sdk";
 import { connect, fail } from "./auth.js";
 
 // Every registration mints a NEW contract id — bumping the version moves the running contract
-// out of any ACL that pinned the old id, and the failure only shows up at the KV read. List
-// every id that should keep access. See finding 13.
-const CONTRACT_IDS = (process.env.CONTRACT_IDS ?? "501,502")
-  .split(",")
-  .map((s) => Number(s.trim()))
-  .filter((n) => Number.isFinite(n));
+// out of any ACL that pinned the old id, and the failure only shows up at the KV read. Grant
+// every id register.ts has recorded. See finding 13.
+const ID_LOG = "./contract-ids.json";
+
+const CONTRACT_IDS = process.env.CONTRACT_IDS
+  ? process.env.CONTRACT_IDS.split(",").map((s) => Number(s.trim()))
+  : await readFile(ID_LOG, "utf8")
+      .then((raw) => JSON.parse(raw) as number[])
+      .catch(() => {
+        console.error(`No ${ID_LOG} found. Run \`npm run register\` first, or set CONTRACT_IDS.`);
+        process.exit(1);
+      });
+
+if (!CONTRACT_IDS.length || CONTRACT_IDS.some((n) => !Number.isFinite(n))) {
+  console.error(`No usable contract ids: ${JSON.stringify(CONTRACT_IDS)}`);
+  process.exit(1);
+}
 
 const { t3n, tenantDid } = await connect();
 

@@ -68,8 +68,12 @@ npm run secrets
 npm run invoke
 ```
 
-`register.ts` pins `CONTRACT_TAIL`/`CONTRACT_VERSION` and `setup-secrets.ts` pins
-`CONTRACT_ID = 501`; adjust both if you register under a different tail or get a different id.
+Order matters. `register` picks the next patch version above whatever is deployed (override
+with `CONTRACT_VERSION`) and appends the newly minted contract id to `contract-ids.json`;
+`secrets` then grants the map ACL to every id in that file. That sequencing exists because of
+finding 13 — each registration mints a *new* id, and an ACL that still names only the old one
+fails at runtime, not at deploy.
+
 Set `DUFFEL_API_KEY` in `.env` to take step 4 past the Duffel 401.
 
 ## Findings summary

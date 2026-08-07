@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "quickstart": "tsx quickstart.ts",
     "register": "tsx register.ts",
     "invoke": "tsx invoke.ts",
-    "secrets": "tsx setup-secrets.ts"
+    "secrets": "tsx setup-secrets.ts",
+    "test:contract": "cd z-tenant-flight && cargo test --lib --target x86_64-pc-windows-gnu"
   },
   "keywords": [],
   "author": "",

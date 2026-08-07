@@ -76,6 +76,14 @@ fails at runtime, not at deploy.
 
 Set `DUFFEL_API_KEY` in `.env` to take step 4 past the Duffel 401.
 
+The contract's own test suite:
+
+```bash
+npm run test:contract
+```
+
+The explicit `--target` is not optional — see finding 8.
+
 ## Findings summary
 
 | # | Finding | Severity |

@@ -79,6 +79,12 @@ TypeError: Cannot read properties of undefined (reading 'unsafe_trust_server')
 The sample is the first thing a new developer runs, and it is broken. Suggested fix: add
 `trustAnchor` to the Quickstart snippet.
 
+The same defect is on the public product page (`terminal3.io/products/agent-developer-kit`),
+whose "From signup to first protected action in 5 minutes" snippet also constructs
+`new T3nClient({ wasmComponent, handlers })` with no `trustAnchor`. That page additionally
+calls `setEnvironment("sandbox")` while the Quickstart calls `setEnvironment("testnet")`, with
+nothing explaining which a new developer should pick — see also finding 2.
+
 ## 6. Missing required config surfaces as a cryptic TypeError, and the stack is unreadable
 
 Two problems compound finding 5:

@@ -1,0 +1,305 @@
+<title>T3N ADK Bounty Submission — FSThub</title>
+<style>
+  body { font-family: Georgia, "Times New Roman", serif; font-size: 11pt; line-height: 1.5;
+         color: #111; max-width: 7.5in; margin: 0 auto; padding: 24px; background: #fff; }
+  h1 { font-size: 20pt; margin: 0 0 4px; }
+  h2 { font-size: 15pt; margin: 28px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  h3 { font-size: 12pt; margin: 20px 0 6px; }
+  p { margin: 8px 0; }
+  code, pre { font-family: Consolas, "Courier New", monospace; font-size: 9.5pt; }
+  code { background: #f2f2f2; padding: 1px 3px; }
+  pre { background: #f6f6f6; border: 1px solid #ddd; padding: 10px 12px; white-space: pre-wrap;
+        word-break: break-word; margin: 8px 0; }
+  table { border-collapse: collapse; margin: 10px 0; width: 100%; }
+  th, td { border: 1px solid #bbb; padding: 5px 8px; text-align: left; font-size: 10pt;
+           vertical-align: top; }
+  th { background: #eee; }
+  .meta { margin: 2px 0; }
+  .shot { border: 2px dashed #c00; color: #c00; padding: 14px; margin: 10px 0;
+          font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; text-align: center; }
+  .note { font-style: italic; color: #444; }
+  hr { border: 0; border-top: 1px solid #ccc; margin: 22px 0; }
+</style>
+
+<h1>T3N ADK Bounty Submission</h1>
+
+<p class="meta"><b>Bounty:</b> Create Agent ID, claim free tokens, &amp; deploy first RUST contract on the network</p>
+<p class="meta"><b>Sponsor:</b> LOL ventures</p>
+<p class="meta"><b>Agent ID (DID):</b> <code>did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5</code></p>
+<p class="meta"><b>Registered contract:</b> <code>z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts</code></p>
+<p class="meta"><b>Current deployment:</b> v0.1.3, contract id <b>504</b> (ids 501–504 across versions 0.1.0–0.1.3 — the reason for that is finding <b>E</b>)</p>
+<p class="meta"><b>GitHub repo:</b> <a href="https://github.com/FSThub/t3n-adk-bounty">https://github.com/FSThub/t3n-adk-bounty</a></p>
+
+<hr>
+
+<h2>1. What was completed</h2>
+
+<p>All of the Quickstart and all five Walkthrough steps, on Windows 11.</p>
+
+<table>
+  <tr><th>Step</th><th>Outcome</th></tr>
+  <tr><td>Quickstart</td><td>Authenticated to testnet</td></tr>
+  <tr><td>1. Write contract</td><td>Reference implementation <code>z-tenant-flight</code> cloned</td></tr>
+  <tr><td>2. Build contract</td><td><code>z_tenant_flight.wasm</code> — 193.4 KB, header <code>00 61 73 6d 0d 00 01 00</code> (valid WASM component, not a bare module)</td></tr>
+  <tr><td>3. Register contract</td><td>Registered; current deployment is v0.1.3, contract id 504</td></tr>
+  <tr><td>4. Invoke contract</td><td>Grant applied, contract executed inside the TEE, KV secret read, outbound HTTP reached <code>api.duffel.com</code></td></tr>
+  <tr><td>5. Test contract</td><td>7/7 native tests green; <code>clippy -D warnings</code> clean</td></tr>
+</table>
+
+<p>Step 4 ends at Duffel's own <code>HTTP 401</code>, because no Duffel account was available and a
+placeholder token was seeded. Every T3N-side link in the chain — authentication, agent grant,
+enclave execution, KV read, egress — is exercised and passing. Supplying a real
+<code>DUFFEL_API_KEY</code> is the only thing between this and a completed booking.</p>
+
+<h3>Evidence</h3>
+
+<p>No screenshot of the claim-page success screen is included, and it cannot be: during the test
+phase that page renders once and the key is unrecoverable afterwards, with no dashboard to
+retrieve it from. Re-claiming would have issued a <i>different</i> DID and invalidated every
+artefact below, so the Agent ID is evidenced instead by the thing that matters more — the DID
+authenticating against testnet and owning a registered contract.</p>
+
+<p>Verbatim terminal output follows; full transcripts are in <code>evidence/</code> in the repo.</p>
+
+<p><b>Quickstart</b> — <code>npm run quickstart</code></p>
+
+<pre>fetchTrustedManifest() failed: Trust manifest request to
+https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest failed: 405 Method Not Allowed
+Falling back to unsafe_trust_server — DKG attestation is NOT verified.
+Authenticated as did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5 (0x405299158c25e02ab1f6f57781a9406c1784c11a)
+Connected as: did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5</pre>
+
+<div class="shot">SISIPKAN SCREENSHOT 1 — npm run quickstart</div>
+
+<p><b>Build</b> — <code>cargo build --target wasm32-wasip2 --release</code></p>
+
+<pre>   Compiling z-tenant-flight v0.4.1 (D:\miningsol\z-tenant-flight)
+    Finished `release` profile [optimized] target(s) in 20.17s</pre>
+
+<p>Artifact: <code>z_tenant_flight.wasm</code>, 193.4 KB, leading bytes <code>00 61 73 6d 0d 00 01 00</code> —
+the <code>\0asm</code> magic followed by the component layer, so this is a WASM <b>component</b>, not a
+bare module.</p>
+
+<p><b>Register</b> — <code>npm run register</code></p>
+
+<pre>Current version 0.1.2 — registering 0.1.3
+TenantClient ready.
+Read ./z-tenant-flight/target/wasm32-wasip2/release/z_tenant_flight.wasm (193.4 KB)
+Registered z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts as contract id 504
+Contract ids so far: 501, 502, 503, 504 — run `npm run secrets` to refresh the map ACL.</pre>
+
+<div class="shot">SISIPKAN SCREENSHOT 2 — npm run register</div>
+
+<p>Four registrations of the same tail produced four different contract ids — that is finding
+<b>E</b> below, and the last two lines are this repo's mitigation for it.</p>
+
+<p><b>Invoke</b> — <code>npm run invoke</code></p>
+
+<pre>z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts @ 0.1.3
+tee:user/contracts @ 2.20.1
+agent-auth-update OK — grant in place
+FAILED at: search-offers
+  name:    RpcError
+  message: RPC Error: contract error: Duffel offer-request failed: HTTP 401 —
+  {"errors":[{...,"code":"access_token_not_found"}],"meta":{"request_id":"GMmcF6DMjXqTvOwABkUD","status":401}}</pre>
+
+<div class="shot">SISIPKAN SCREENSHOT 3 — npm run invoke</div>
+
+<p>Reaching Duffel's 401 is the success condition here: it means authentication, the agent grant,
+enclave execution, the KV secret read, and egress to <code>api.duffel.com</code> all passed, and the
+only thing missing is a real Duffel token.</p>
+
+<p><b>Test</b> — <code>npm run test:contract</code> (wrapping
+<code>cargo test --lib --target x86_64-pc-windows-gnu</code>; the explicit target is not optional —
+see finding <b>K</b>)</p>
+
+<pre>running 7 tests
+test booking::tests::book_offer_bad_input_returns_err ... ok
+test booking::tests::book_offer_non_wasm_returns_err ... ok
+test booking::tests::book_offer_rejects_inline_pii_fields ... ok
+test search::tests::search_offers_bad_input_returns_err ... ok
+test search::tests::search_offers_non_wasm_returns_err ... ok
+test tests::contract_version_is_semver ... ok
+test tests::contract_version_is_v0_4_0 ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out</pre>
+
+<div class="shot">SISIPKAN SCREENSHOT 4 — npm run test:contract</div>
+
+<hr>
+
+<h2>2. Environment</h2>
+
+<p>Windows 11 · Node v22.21.1 · <code>@terminal3/t3n-sdk@4.30.0</code> · Rust 1.97.1
+(<code>x86_64-pc-windows-gnu</code> host, target <code>wasm32-wasip2</code>) ·
+<code>setEnvironment("testnet")</code> · node <code>cn-api.sg.testnet.t3n.terminal3.io</code></p>
+
+<hr>
+
+<h2>3. Bugs found</h2>
+
+<p>13 findings, all reproduced. Full detail with code excerpts and repro steps is in
+<code>FINDINGS.md</code> in the repo. Ranked by what I would fix first.</p>
+
+<h3>High — worth fixing before more developers onboard</h3>
+
+<p><b>A. <code>fetchTrustedManifest()</code> is broken, and the failure pushes everyone into the
+unsafe mode.</b> It is the SDK's only supported way to get a real trust anchor. On testnet it
+returns <code>405 Method Not Allowed</code>. Probing the endpoint shows a plain method mismatch —
+the server advertises <code>Allow: POST</code>, the SDK sends <code>GET</code>:</p>
+
+<table>
+  <tr><th>Method</th><th>Status</th><th><code>Allow</code></th></tr>
+  <tr><td>GET</td><td>405</td><td><code>POST</code></td></tr>
+  <tr><td>HEAD</td><td>405</td><td><code>POST</code></td></tr>
+  <tr><td>OPTIONS</td><td>200</td><td><code>POST</code></td></tr>
+  <tr><td>POST</td><td>400</td><td>—</td></tr>
+</table>
+
+<p>Because the secure path is unavailable, every developer on testnet today falls back to
+<code>{ unsafe_trust_server: true }</code> — which your own type docs describe as the condition
+where "a network attacker with their own TDX VM can hand the SDK a forged-but-valid attestation
+for a key it controls and read every session." SP-003's design intent, that bypassing
+verification must be a visible deliberate choice, is defeated when the bypass is the only thing
+that works.</p>
+
+<p><b>B. The reference contract's documented privacy guarantee holds on only one of its two
+paths.</b> <code>z-tenant-flight</code>'s README states, without qualification, that Duffel error
+responses are "logged inside the TEE and never forwarded to the caller." <code>book-offer</code>
+honours this — it logs the body inside the enclave and returns only a status code.
+<code>search-offers</code>, in the file next to it, interpolates the <b>entire upstream body</b>
+into the error that crosses the WIT boundary. Observed live:</p>
+
+<pre>RPC Error: contract error: Duffel offer-request failed: HTTP 401 —
+{"errors":[{...,"code":"access_token_not_found"}],"meta":{"request_id":"GMmaS4jQ8eTGEZkAPXYJ",...}}</pre>
+
+<p><code>search-offers</code> takes no PII, so this call leaks no passenger data. The risk is that
+this is the reference implementation developers are told to copy: anyone reusing the
+<code>search.rs</code> pattern on a path that <i>does</i> carry PII inherits a leak, and the README
+tells them they are safe.</p>
+
+<p><b>C. The Quickstart sample cannot run as published.</b> <code>T3nClientConfig.trustAnchor</code>
+is marked <b>Required</b> in the shipped types, but the Quickstart's
+<code>new T3nClient({ wasmComponent, handlers })</code> omits it. Copy-pasting fails at
+<code>handshake()</code> with
+<code>TypeError: Cannot read properties of undefined (reading 'unsafe_trust_server')</code>.</p>
+
+<p><b>D. The Walkthrough is five pages and page 1 dead-ends.</b> <code>/walkthrough</code> serves
+"1. Write your TEE contract" with no next link, no sidebar, no step list. Pages 2–5 (build,
+register, invoke, test) are discoverable only through <code>llms.txt</code>, a file aimed at AI
+crawlers. A participant following the bounty instruction literally builds the contract and never
+learns that registration and invocation exist.</p>
+
+<p><b>E. Re-registering a contract mints a new id and silently breaks every KV ACL pinned to the
+old one.</b> <code>create-kv-maps</code> teaches ACLs written as <code>{ only: [contractId] }</code>.
+Nothing says that <code>contract_id</code> changes on <i>every</i> registration, including a version
+bump of the same tail:</p>
+
+<table>
+  <tr><th>Registration</th><th>Result</th></tr>
+  <tr><td><code>travel-contracts</code> v0.1.0</td><td>contract id <b>501</b></td></tr>
+  <tr><td>v0.1.1 (same tail, same wasm)</td><td>contract id <b>502</b></td></tr>
+  <tr><td>v0.1.2</td><td>contract id <b>503</b></td></tr>
+  <tr><td>v0.1.3</td><td>contract id <b>504</b></td></tr>
+</table>
+
+<p>The failure mode is the dangerous kind — nothing fails at deploy time. Registration succeeds,
+<code>agent-auth-update</code> succeeds, the contract executes inside the enclave, and it dies only
+at the first call that touches a secret:</p>
+
+<pre>kv read: kv_store.get on 'z:f49412c2…:secrets' read denied: access denied:
+TenantContract(did:t3n:f49412c2…/502) cannot read map "z:f49412c2…:secrets"</pre>
+
+<p>On a production tenant that is a version bump which looks clean and takes the contract down.
+Confirmed as the cause by widening the ACL to cover the new id, after which the same invocation
+reaches Duffel and returns the expected <code>401</code>. Either document it loudly on
+<code>register-contract</code>, or let ACLs name a tail instead of a numeric id so they survive
+bumps.</p>
+
+<p>The scripts in this repo work around it: <code>register.ts</code> appends each minted id to
+<code>contract-ids.json</code>, and <code>setup-secrets.ts</code> grants the map ACL to every
+recorded id. That is a workaround for a footgun, not a fix — the platform is the right place to
+solve it.</p>
+
+<p><b>F. Critical advisory on a clean install.</b> <code>npm install @terminal3/t3n-sdk</code> alone
+yields 4 vulnerabilities, 1 critical: <code>decompress@4.2.1</code>, reached only through
+<code>t3n-sdk → jco → componentize-js → weval</code>.</p>
+
+<h3>Medium</h3>
+
+<p><b>G. <code>tenant.me()</code> does not exist.</b> The <code>set-up-dev-env</code> sample fails
+with <code>TypeError: tenant.me is not a function</code>; <code>me()</code> lives on the
+<code>tenant</code> namespace, so the working call is <code>tenant.tenant.me()</code>. Third page in
+a row whose first sample cannot run.</p>
+
+<p><b>H. Missing required config produces an unreadable failure.</b> <code>trustAnchor</code> is
+enforced only by TypeScript — no constructor-time check — so the error surfaces deep in the
+handshake naming an internal field rather than the missing key. Compounding it,
+<code>dist/index.esm.js</code> ships minified <i>and</i> name-mangled, so an uncaught throw prints
+~20,000 characters of scrambled source and the actual message scrolls off screen. Every call had
+to be wrapped in <code>try/catch</code> to read errors at all.</p>
+
+<p><b>I. Quickstart states the wrong default environment.</b> The page says the SDK "defaults to
+production — set this explicitly." The shipped types say the public artifact defaults to
+<i>testnet</i>. One of the two is wrong.</p>
+
+<p><b>J. Quickstart is bash-only.</b> It sets the key with <code>export T3N_API_KEY=...</code>. On
+Windows this leaves the variable undefined, and the sample's non-null assertion
+(<code>process.env.T3N_API_KEY!</code>) turns that into a confusing downstream failure instead of a
+clear message.</p>
+
+<p><b>K. The documented test command fails out of the box.</b> <code>z-tenant-flight</code>'s README
+says <code>cargo test --lib</code>; <code>.cargo/config.toml</code> pins
+<code>build.target = wasm32-wasip2</code>, so tests compile to WASM and cannot execute natively
+(<code>os error 193</code>). Forcing the host triple runs all 7 green.</p>
+
+<h3>Low</h3>
+
+<p><b>L. Three conflicting versions in one crate.</b> README says <code>v0.3.0</code>,
+<code>src/lib.rs</code> says <code>v0.4.0</code>, <code>Cargo.toml</code> and
+<code>CONTRACT_VERSION</code> say <code>0.4.1</code>. The test asserting the constant is named
+<code>contract_version_is_v0_4_0</code> but asserts <code>"0.4.1"</code>. For a contract whose
+version is registered on chain, three disagreeing sources of truth is a hazard.</p>
+
+<p><b>M. Another participant reported all endpoints returning <code>ERR_CONNECTION_REFUSED</code></b>
+roughly three hours before this run. Everything was reachable during my test, so I log it as
+possible intermittent availability rather than a confirmed defect.</p>
+
+<h3>Undocumented prerequisites worth adding</h3>
+
+<ul>
+  <li><b>No Windows guidance anywhere.</b> On a clean Windows 11 box with Visual Studio Community
+  2022 but no C++ workload, the default MSVC Rust host has no linker. Installing the GNU host
+  (<code>rustup-init.exe -y --default-host x86_64-pc-windows-gnu</code>) avoids a multi-GB Visual
+  Studio component. Worth a line, since the Walkthrough tells readers no prior Rust experience is
+  needed.</li>
+  <li><b><code>cargo install wasm-tools</code> fails on the GNU host</b> — <code>windows-sys</code>
+  needs <code>dlltool.exe</code>, which rustup's GNU toolchain does not ship. Prebuilt binaries
+  sidestep it.</li>
+  <li><b>Step 4 has two prerequisites it does not mention.</b> The <code>secrets</code> KV map must
+  exist with an ACL naming the contract id, and the API key must be seeded, before
+  <code>search-offers</code> will run. Without them the call fails
+  <code>access denied: TenantContract(...) cannot read map</code>. Both are covered on separate
+  <i>Tips</i> pages that the invoke page never links to.</li>
+  <li><b><code>seed-api-key</code> teaches the low-level control call</b>
+  <code>executeControl("map-entry-set", …)</code> when <code>TenantMapsNamespace</code> already
+  exposes the typed <code>tenant.maps.entrySet(tail, key, value)</code>. The typed helper is the
+  better thing to put in front of a new developer.</li>
+</ul>
+
+<hr>
+
+<h2>4. Use case suggestion</h2>
+
+<p>The privacy primitive that makes T3N interesting here is that the enclave can hold a credential
+the caller never sees, and place PII into an outbound request without the agent ever handling it.
+The flight demo shows it, but a sharper fit is <b>agent-driven KYC reuse</b>: a user verifies
+identity once, and thereafter any agent can prove specific attributes ("over 18", "resident of
+Indonesia", "sanctions-clear") to a third party without the agent, the relying party, or the
+developer ever seeing the underlying documents. The audit row per action is what makes it
+defensible to a regulator — which is the part existing agent frameworks cannot offer at all.</p>
+
+<hr>
+
+<p class="note">Prepared with Claude Code. Every command, error message, and endpoint probe quoted
+above was executed against T3N testnet; nothing here is reproduced from documentation alone.</p>

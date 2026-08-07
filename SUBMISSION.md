@@ -4,7 +4,7 @@
 **Sponsor:** LOL ventures
 **Agent ID (DID):** `did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5`
 **Registered contract:** `z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts`
-**Current deployment:** v0.1.3, contract id **504** (ids 501–504 across versions 0.1.0–0.1.3 — the reason for that is finding **M**)
+**Current deployment:** v0.1.3, contract id **504** (ids 501–504 across versions 0.1.0–0.1.3 — the reason for that is finding **E**)
 **GitHub repo:** https://github.com/FSThub/t3n-adk-bounty
 
 ---
@@ -68,7 +68,7 @@ Contract ids so far: 501, 502, 503, 504 — run `npm run secrets` to refresh the
 ```
 
 Four registrations of the same tail produced four different contract ids — that is finding
-**M** below, and the last two lines are this repo's mitigation for it.
+**E** below, and the last two lines are this repo's mitigation for it.
 
 **Invoke** — `npm run invoke`
 
@@ -87,7 +87,7 @@ enclave execution, the KV secret read, and egress to `api.duffel.com` all passed
 thing missing is a real Duffel token.
 
 **Test** — `npm run test:contract` (wrapping `cargo test --lib --target x86_64-pc-windows-gnu`;
-the explicit target is not optional — see finding **J**)
+the explicit target is not optional — see finding **K**)
 
 ```
 running 7 tests
@@ -164,7 +164,7 @@ register, invoke, test) are discoverable only through `llms.txt`, a file aimed a
 A participant following the bounty instruction literally builds the contract and never learns
 that registration and invocation exist.
 
-**M. Re-registering a contract mints a new id and silently breaks every KV ACL pinned to the
+**E. Re-registering a contract mints a new id and silently breaks every KV ACL pinned to the
 old one.** `create-kv-maps` teaches ACLs written as `{ only: [contractId] }`. Nothing says that
 `contract_id` changes on *every* registration, including a version bump of the same tail:
 
@@ -193,43 +193,43 @@ The scripts in this repo work around it: `register.ts` appends each minted id to
 `contract-ids.json`, and `setup-secrets.ts` grants the map ACL to every recorded id. That is a
 workaround for a footgun, not a fix — the platform is the right place to solve it.
 
-**E. Critical advisory on a clean install.** `npm install @terminal3/t3n-sdk` alone yields
+**F. Critical advisory on a clean install.** `npm install @terminal3/t3n-sdk` alone yields
 4 vulnerabilities, 1 critical: `decompress@4.2.1`, reached only through
 `t3n-sdk → jco → componentize-js → weval`.
 
 ### Medium
 
-**F. `tenant.me()` does not exist.** The `set-up-dev-env` sample fails with
+**G. `tenant.me()` does not exist.** The `set-up-dev-env` sample fails with
 `TypeError: tenant.me is not a function`; `me()` lives on the `tenant` namespace, so the working
 call is `tenant.tenant.me()`. Third page in a row whose first sample cannot run.
 
-**G. Missing required config produces an unreadable failure.** `trustAnchor` is enforced only
+**H. Missing required config produces an unreadable failure.** `trustAnchor` is enforced only
 by TypeScript — no constructor-time check — so the error surfaces deep in the handshake naming
 an internal field rather than the missing key. Compounding it, `dist/index.esm.js` ships
 minified *and* name-mangled, so an uncaught throw prints ~20,000 characters of scrambled source
 and the actual message scrolls off screen. Every call had to be wrapped in `try/catch` to read
 errors at all.
 
-**H. Quickstart states the wrong default environment.** The page says the SDK "defaults to
+**I. Quickstart states the wrong default environment.** The page says the SDK "defaults to
 production — set this explicitly." The shipped types say the public artifact defaults to
 *testnet*. One of the two is wrong.
 
-**I. Quickstart is bash-only.** It sets the key with `export T3N_API_KEY=...`. On Windows this
+**J. Quickstart is bash-only.** It sets the key with `export T3N_API_KEY=...`. On Windows this
 leaves the variable undefined, and the sample's non-null assertion (`process.env.T3N_API_KEY!`)
 turns that into a confusing downstream failure instead of a clear message.
 
-**J. The documented test command fails out of the box.** `z-tenant-flight`'s README says
+**K. The documented test command fails out of the box.** `z-tenant-flight`'s README says
 `cargo test --lib`; `.cargo/config.toml` pins `build.target = wasm32-wasip2`, so tests compile
 to WASM and cannot execute natively (`os error 193`). Forcing the host triple runs all 7 green.
 
 ### Low
 
-**K. Three conflicting versions in one crate.** README says `v0.3.0`, `src/lib.rs` says
+**L. Three conflicting versions in one crate.** README says `v0.3.0`, `src/lib.rs` says
 `v0.4.0`, `Cargo.toml` and `CONTRACT_VERSION` say `0.4.1`. The test asserting the constant is
 named `contract_version_is_v0_4_0` but asserts `"0.4.1"`. For a contract whose version is
 registered on chain, three disagreeing sources of truth is a hazard.
 
-**L. Another participant reported all endpoints returning `ERR_CONNECTION_REFUSED`** roughly
+**M. Another participant reported all endpoints returning `ERR_CONNECTION_REFUSED`** roughly
 three hours before this run. Everything was reachable during my test, so I log it as possible
 intermittent availability rather than a confirmed defect.
 

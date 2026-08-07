@@ -5,7 +5,7 @@
 **Agent ID (DID):** `did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5`
 **Registered contract:** `z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts`
 **Current deployment:** v0.1.3, contract id **504** (ids 501–504 across versions 0.1.0–0.1.3 — the reason for that is finding **M**)
-**GitHub repo:** `<PASTE PUBLIC REPO URL HERE>`
+**GitHub repo:** https://github.com/FSThub/t3n-adk-bounty
 
 ---
 

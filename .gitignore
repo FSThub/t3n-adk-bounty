@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.log
+target/
+
+# Upstream reference implementation — cloned, not vendored. See README.
+z-tenant-flight/

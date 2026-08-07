@@ -5,10 +5,10 @@
 fetchTrustedManifest() failed: Trust manifest request to https://cn-api.sg.testnet.t3n.terminal3.io/api/trust-manifest failed: 405 Method Not Allowed
 Falling back to unsafe_trust_server — DKG attestation is NOT verified.
 Authenticated as did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5 (0x405299158c25e02ab1f6f57781a9406c1784c11a)
-z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts @ 0.1.2
+z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts @ 0.1.3
 tee:user/contracts @ 2.20.1
 agent-auth-update OK — grant in place
 FAILED at: search-offers
   name:    RpcError
-  message: RPC Error: contract error: Duffel offer-request failed: HTTP 401 — {"errors":[{"documentation_url":"https://duffel.com/docs/api/overview/response-handling","title":"Access token not found","type":"authentication_error","message":"The access token you have used is not a valid API access token","code":"access_token_not_found"}],"meta":{"request_id":"GMmbquZr-BmdtNwAACIP","status":401}} [eeb03a0d-0011-469b-8c60-f3a9ac02ecbb]
+  message: RPC Error: contract error: Duffel offer-request failed: HTTP 401 — {"errors":[{"documentation_url":"https://duffel.com/docs/api/overview/response-handling","title":"Access token not found","type":"authentication_error","message":"The access token you have used is not a valid API access token","code":"access_token_not_found"}],"meta":{"request_id":"GMmcF6DMjXqTvOwABkUD","status":401}} [4d377b19-91e9-4872-8936-4028ba84aaa1]
   code: RPC_ERROR

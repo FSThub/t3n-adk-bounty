@@ -3,7 +3,8 @@
 **Bounty:** Create Agent ID, claim free tokens, & deploy first RUST contract on the network
 **Sponsor:** LOL ventures
 **Agent ID (DID):** `did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5`
-**Registered contract:** `z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts` — contract id **501**
+**Registered contract:** `z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts`
+**Current deployment:** v0.1.3, contract id **504** (ids 501–504 across versions 0.1.0–0.1.3 — the reason for that is finding **M**)
 **GitHub repo:** `<PASTE PUBLIC REPO URL HERE>`
 
 ---
@@ -17,7 +18,7 @@ All of the Quickstart and all five Walkthrough steps, on Windows 11.
 | Quickstart | Authenticated to testnet |
 | 1. Write contract | Reference implementation `z-tenant-flight` cloned |
 | 2. Build contract | `z_tenant_flight.wasm` — 193.4 KB, header `00 61 73 6d 0d 00 01 00` (valid WASM component, not a bare module) |
-| 3. Register contract | Registered as contract id 501 |
+| 3. Register contract | Registered; current deployment is v0.1.3, contract id 504 |
 | 4. Invoke contract | Grant applied, contract executed inside the TEE, KV secret read, outbound HTTP reached `api.duffel.com` |
 | 5. Test contract | 7/7 native tests green; `clippy -D warnings` clean |
 
@@ -26,11 +27,15 @@ placeholder token was seeded. Every T3N-side link in the chain — authenticatio
 enclave execution, KV read, egress — is exercised and passing. Supplying a real
 `DUFFEL_API_KEY` is the only thing between this and a completed booking.
 
-> **[SCREENSHOT 1]** — the claim-page success screen showing the Agent ID / DID (redact the API key)
-
 ### Evidence
 
-Verbatim terminal output. The full transcripts are in `evidence/` in the repo.
+No screenshot of the claim-page success screen is included, and it cannot be: during the test
+phase that page renders once and the key is unrecoverable afterwards, with no dashboard to
+retrieve it from. Re-claiming would have issued a *different* DID and invalidated every
+artefact below, so the Agent ID is evidenced instead by the thing that matters more — the DID
+authenticating against testnet and owning a registered contract.
+
+Verbatim terminal output follows; full transcripts are in `evidence/` in the repo.
 
 **Quickstart** — `npm run quickstart`
 
@@ -55,31 +60,34 @@ Artifact: `z_tenant_flight.wasm`, 193.4 KB, leading bytes `00 61 73 6d 0d 00 01 
 **Register** — `npm run register`
 
 ```
+Current version 0.1.2 — registering 0.1.3
 TenantClient ready.
 Read ./z-tenant-flight/target/wasm32-wasip2/release/z_tenant_flight.wasm (193.4 KB)
-Registered z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts as contract id 502
+Registered z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts as contract id 504
+Contract ids so far: 501, 502, 503, 504 — run `npm run secrets` to refresh the map ACL.
 ```
 
-(Shown here at v0.1.1. The first registration, at v0.1.0, returned contract id **501** — the
-difference is finding **M** below.)
+Four registrations of the same tail produced four different contract ids — that is finding
+**M** below, and the last two lines are this repo's mitigation for it.
 
 **Invoke** — `npm run invoke`
 
 ```
-z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts @ 0.1.1
+z:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5:travel-contracts @ 0.1.3
 tee:user/contracts @ 2.20.1
 agent-auth-update OK — grant in place
 FAILED at: search-offers
   name:    RpcError
   message: RPC Error: contract error: Duffel offer-request failed: HTTP 401 —
-  {"errors":[{...,"code":"access_token_not_found"}],"meta":{"request_id":"GMmbCM2nz10vChMADL0V","status":401}}
+  {"errors":[{...,"code":"access_token_not_found"}],"meta":{"request_id":"GMmcF6DMjXqTvOwABkUD","status":401}}
 ```
 
 Reaching Duffel's 401 is the success condition here: it means authentication, the agent grant,
 enclave execution, the KV secret read, and egress to `api.duffel.com` all passed, and the only
 thing missing is a real Duffel token.
 
-**Test** — `cargo test --lib --target x86_64-pc-windows-gnu`
+**Test** — `npm run test:contract` (wrapping `cargo test --lib --target x86_64-pc-windows-gnu`;
+the explicit target is not optional — see finding **J**)
 
 ```
 running 7 tests
@@ -164,6 +172,8 @@ old one.** `create-kv-maps` teaches ACLs written as `{ only: [contractId] }`. No
 |---|---|
 | `travel-contracts` v0.1.0 | contract id **501** |
 | `travel-contracts` v0.1.1 (same tail, same wasm) | contract id **502** |
+| v0.1.2 | contract id **503** |
+| v0.1.3 | contract id **504** |
 
 The failure mode is the dangerous kind — nothing fails at deploy time. Registration succeeds,
 `agent-auth-update` succeeds, the contract executes inside the enclave, and it dies only at the
@@ -175,9 +185,13 @@ TenantContract(did:t3n:f49412c2…/502) cannot read map "z:f49412c2…:secrets"
 ```
 
 On a production tenant that is a version bump which looks clean and takes the contract down.
-Confirmed as the cause by widening the ACL to `{ only: [501, 502] }`, after which the same
+Confirmed as the cause by widening the ACL to cover the new id, after which the same
 invocation reaches Duffel and returns the expected `401`. Either document it loudly on
 `register-contract`, or let ACLs name a tail instead of a numeric id so they survive bumps.
+
+The scripts in this repo work around it: `register.ts` appends each minted id to
+`contract-ids.json`, and `setup-secrets.ts` grants the map ACL to every recorded id. That is a
+workaround for a footgun, not a fix — the platform is the right place to solve it.
 
 **E. Critical advisory on a clean install.** `npm install @terminal3/t3n-sdk` alone yields
 4 vulnerabilities, 1 critical: `decompress@4.2.1`, reached only through

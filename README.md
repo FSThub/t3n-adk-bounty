@@ -14,7 +14,7 @@ defects found along the way, each with reproduction steps.
 | Quickstart | Authenticated as `did:t3n:f49412c299be54937e42e5ea3f69ca2ff3d6ddc5` |
 | 1. Write | Reference contract `z-tenant-flight` cloned |
 | 2. Build | `z_tenant_flight.wasm`, 193.4 KB, valid WASM **component** (`00 61 73 6d 0d 00 01 00`) |
-| 3. Register | `z:f49412c2…:travel-contracts`, contract id **501** |
+| 3. Register | `z:f49412c2…:travel-contracts` — current deployment v0.1.3, contract id **504** (ids 501–504 across four registrations; see finding 13) |
 | 4. Invoke | Grant applied, contract executed in TEE, KV secret read, egress reached `api.duffel.com` |
 | 5. Test | 7/7 native tests green, `clippy -D warnings` clean |
 

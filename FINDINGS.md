@@ -369,8 +369,9 @@ Prebuilt `wasm-tools` binaries are published on GitHub releases, so the document
       `target/wasm32-wasip2/release/z_tenant_flight.wasm`, 193.4 KB, header
       `00 61 73 6d 0d 00 01 00` (valid WASM **component**, not a bare module)
 - [x] Native test suite green (7/7) and `clippy -D warnings` clean
-- [x] Contract **registered on testnet** — `z:f49412c2…:travel-contracts`, contract id `501`
-      (and `502` after the v0.1.1 bump — see finding 13)
+- [x] Contract **registered on testnet** — `z:f49412c2…:travel-contracts`. Four registrations
+      (v0.1.0–v0.1.3) minted ids `501`–`504`; current deployment is v0.1.3 / id `504`.
+      See finding 13 for why the id moves.
 - [x] Walkthrough step 4 (invoke) — self-grant applied via `agent-auth-update`, contract
       executed in the TEE, secret read from KV, outbound HTTP reached `api.duffel.com`.
       Terminal state is Duffel's own `401` on the placeholder token (no Duffel account here).
